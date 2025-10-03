@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Quotes for WooCommerce
  * Description: This plugin allows you to convert your WooCommerce store into a quote only store. It will hide the prices for the products and not take any payment at Checkout. You can then setup prices for the items in the order and send a notification to the Customer.
- * Version: 2.2
+ * Version: 2.3
  * Author: Mikel Marqués
  * Requires at least: 4.5
  * WC Requires at least: 3.0
@@ -291,9 +291,15 @@ function qwc_sign_quote_form( $order_id ) {
     }
     
     // Procesar formulario
+    /*
     if ( isset( $_POST['qwc_sign_quote_nonce'] ) && wp_verify_nonce( $_POST['qwc_sign_quote_nonce'], 'qwc_sign_quote_' . $order_id ) ) {
         qwc_process_signature_form( $order_id );
-    }
+    }*/
+
+    if ( isset( $_POST['qwc_sign_quote_nonce'] ) && wp_verify_nonce( $_POST['qwc_sign_quote_nonce'], 'qwc_sign_quote_' . $order_id ) ) {
+    qwc_process_signature_form( $order_id );
+    return; // IMPORTANTE: para que no muestre el formulario después de procesar
+}
     
     ?>
     <div class="qwc-sign-quote-wrapper">
@@ -342,10 +348,13 @@ function qwc_sign_quote_form( $order_id ) {
                 
                 <p class="form-row form-row-wide">
                     <label for="qwc_iban"><?php esc_html_e( 'IBAN *', 'quote-wc' ); ?></label>
-                    <input type="text" name="qwc_iban" id="qwc_iban" required 
+                    <!--input type="text" name="qwc_iban" id="qwc_iban" required 
                            placeholder="ES00 0000 0000 0000 0000 0000"
                            pattern="[A-Z]{2}[0-9]{2}[A-Z0-9]{1,30}"
-                           maxlength="34" />
+                           maxlength="34" /-->
+
+                    <input type="text" name="qwc_iban" id="qwc_iban" required placeholder="ES00 0000 0000 0000 0000 0000" maxlength="34" />
+
                     <small><?php esc_html_e( 'Formato: ES00 0000 0000 0000 0000 0000', 'quote-wc' ); ?></small>
                 </p>
             </div>
@@ -619,13 +628,27 @@ function qwc_process_signature_form( $order_id ) {
     // Cambiar estado del pedido
     $order = wc_get_order( $order_id );
     $order->update_status( 'quote-signed', __( 'Cliente ha firmado la cotización.', 'quote-wc' ) );
-    
+   /* 
     // Notificación
     wc_add_notice( __( '✅ Cotización firmada correctamente. Recibirás el pago en los próximos días.', 'quote-wc' ), 'success' );
     
     // Redireccionar
     wp_safe_redirect( wc_get_account_endpoint_url( 'quotes' ) );
-    exit;
+    exit;*/
+
+
+    // Notificación para la próxima página
+    wc_add_notice( __( '✅ Cotización firmada correctamente. Recibirás el pago en los próximos días.', 'quote-wc' ), 'success' );
+
+    // Redireccionar (intentar PHP primero, luego JS como backup)
+    if ( ! headers_sent() ) {
+        wp_safe_redirect( wc_get_account_endpoint_url( 'quotes' ) );
+        exit;
+    } else {
+        // Si los headers ya se enviaron, usar JavaScript
+        echo '<script>window.location.href = "' . esc_url( wc_get_account_endpoint_url( 'quotes' ) ) . '";</script>';
+        exit;
+    }
 }
 
 
@@ -863,4 +886,34 @@ function qwc_quote_status_column_content( $column, $post_id ) {
             }
         }
     }
+}
+
+
+/**
+ * PESTAÑA MIS COTIZACIONES EN MY ACCOUNT
+ */
+// 1. Añadir la pestaña al menú
+add_filter( 'woocommerce_account_menu_items', 'qwc_add_quotes_tab_my_account', 40 );
+function qwc_add_quotes_tab_my_account( $items ) {
+    $new_items = array();
+    foreach ( $items as $key => $value ) {
+        $new_items[$key] = $value;
+        if ( $key === 'orders' ) {
+            $new_items['quotes'] = __( 'Mis Cotizaciones', 'quote-wc' );
+        }
+    }
+    return $new_items;
+}
+
+// 2. Registrar el endpoint
+add_action( 'init', 'qwc_register_quotes_endpoint' );
+function qwc_register_quotes_endpoint() {
+    add_rewrite_endpoint( 'quotes', EP_PAGES );
+}
+
+// 3. Contenido de la pestaña
+add_action( 'woocommerce_account_quotes_endpoint', 'qwc_show_quotes_page' );
+function qwc_show_quotes_page() {
+    echo '<h2>Mis Cotizaciones</h2>';
+    echo '<p>Aquí van tus cotizaciones</p>';
 }
