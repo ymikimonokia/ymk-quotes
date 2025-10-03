@@ -49,7 +49,6 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 			// Modify the 'add to cart' button text.
 			add_filter( 'woocommerce_product_add_to_cart_text', array( &$this, 'qwc_change_button_text' ), 99, 1 );
 			add_filter( 'woocommerce_product_single_add_to_cart_text', array( &$this, 'qwc_change_button_text' ), 99, 1 );
-			//add_filter( 'woocommerce_proceed_to_checkout_text', array( &$this, 'qwc_change_button_text' ), 99, 1 );
 
 			// Hide price on the cart & checkout pages.
 			add_filter( 'wp_enqueue_scripts', array( &$this, 'qwc_css' ) );
@@ -197,9 +196,9 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 		 * @since 1.0
 		 */
 		public function qwc_include_files_admin() {
-			include_once WP_PLUGIN_DIR . '/quotes-for-woocommerce/includes/class-quotes-payment-gateway.php';
-			include_once WP_PLUGIN_DIR . '/quotes-for-woocommerce/includes/class-qwc-email-manager.php';
-			include_once WP_PLUGIN_DIR . '/quotes-for-woocommerce/includes/admin/class-quotes-global-settings.php';
+			include_once WP_PLUGIN_DIR . '/ymk-quotes/includes/class-quotes-payment-gateway.php';
+			include_once WP_PLUGIN_DIR . '/ymk-quotes/includes/class-qwc-email-manager.php';
+			include_once WP_PLUGIN_DIR . '/ymk-quotes/includes/admin/class-quotes-global-settings.php';
 		}
 
 		/**
@@ -208,8 +207,8 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 		 * @since 1.0
 		 */
 		public function qwc_include_files() {
-			include_once WP_PLUGIN_DIR . '/quotes-for-woocommerce/includes/class-quotes-payment-gateway.php';
-			include_once WP_PLUGIN_DIR . '/quotes-for-woocommerce/includes/class-qwc-email-manager.php';
+			include_once WP_PLUGIN_DIR . '/ymk-quotes/includes/class-quotes-payment-gateway.php';
+			include_once WP_PLUGIN_DIR . '/ymk-quotes/includes/class-qwc-email-manager.php';
 		}
 
 		/**
@@ -335,7 +334,7 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 			$quote_status = get_post_meta( $order_id, '_quote_status', true );
 
 			$order = new WC_Order( $order_id );
-			if ( 'quote-pending' === $quote_status && ! qwc_order_display_price( $order ) ) {
+			if ( ( 'quote-pending' === $quote_status || $order->has_status( 'quoted' ) ) && ! qwc_order_display_price( $order ) ) {
 				$plugin_version = get_option( 'quotes_for_wc' );
 				wp_enqueue_style( 'qwc-frontend', plugins_url( '/assets/css/qwc-frontend.css', __FILE__ ), '', $plugin_version, false );
 			}
@@ -361,7 +360,7 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 					array(
 						'ajax_url'  => $ajax_url,
 						'order_id'  => $post->ID,
-						'email_msg' => __( 'Quote emailed', 'quote-wc' ),
+						'email_msg' => __( 'Quote emailed.', 'quote-wc' ),
 					)
 				);
 				wp_enqueue_script( 'qwc-admin' );
@@ -580,7 +579,7 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 			$order_payment_method = ( version_compare( WOOCOMMERCE_VERSION, '3.0.0' ) < 0 ) ? $order->payment_method : $order->get_payment_method();
 			$order_id             = ( version_compare( WOOCOMMERCE_VERSION, '3.0.0' ) < 0 ) ? $order->id : $order->get_id();
 
-			if ( $order->has_status( 'pending' ) && 'quotes-gateway' === $order_payment_method ) {
+			if ( $order->has_status( 'quoted' ) && 'quotes-gateway' === $order_payment_method ) {
 
 				// Get the order meta to check if quote has been sent or no.
 				$quote_status = get_post_meta( $order_id, '_quote_status', true );
@@ -610,7 +609,7 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 
 			$quote_status = get_post_meta( $order_id, '_quote_status', true );
 
-			if ( in_array( $order_status, apply_filters( 'qwc_edit_allowed_order_statuses_for_sending_quotes', array( 'pending' ) ), true ) ) {
+			if ( in_array( $order_status, apply_filters( 'qwc_edit_allowed_order_statuses_for_sending_quotes', array( 'quoted' ) ), true ) ) {
 				if ( 'quote-pending' === $quote_status ) {
 					?>
 					<button id='qwc_quote_complete' type="button" class="button"><?php esc_html_e( 'Quote Complete', 'quote-wc' ); ?></button>
@@ -792,11 +791,11 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 				$order_status = $order->get_status();
 				if ( in_array( $order_status, array( 'completed', 'on-hold' ) ) ) { // phpcs:ignore
 					$title = apply_filters( 'qwc_change_checkout_page_title', $title, 'order-received', $order_status );
-				} elseif ( $order->get_status() === 'pending' ) {
+				} elseif ( $order->get_status() === 'quoted' ) {
 					$title = apply_filters( 'qwc_change_checkout_page_title', $title, 'order-received', $order_status );
 				}
 			} elseif ( is_wc_endpoint_url( 'order-pay' ) && wc_get_page_id( 'checkout' ) === $id ) {
-				$title = apply_filters( 'qwc_change_checkout_page_title', $title, 'order-pay', 'pending' );
+				$title = apply_filters( 'qwc_change_checkout_page_title', $title, 'order-pay', 'quoted' );
 			}
 			return $title;
 		}

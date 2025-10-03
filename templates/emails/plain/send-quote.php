@@ -15,7 +15,7 @@ echo sprintf( __( 'You have received a quotation for your order on %s. The detai
 if ( $order ) :
 
     $order_status = $order->get_status(); 
-	if ( $order_status == 'pending' ) :
+	if ( $order_status == 'quoted' ) :
         echo sprintf( __( 'To pay for this order please use the following link: %s', 'quote-wc' ), $order->get_checkout_payment_url() );
 	endif;
 

@@ -2,143 +2,227 @@
 /**
  * Send Quote Email
  *
- * @package Quotes for WooCommerce/Email Templates
+ * A quote email sent to the customer.
+ *
+ * @package     Quotes for WooCommerce/Email Classes
+ * @class       QWC_Send_Quote
+ * @extends     WC_Email
  */
 
-?>
+/**
+ * Quote Email - Customer.
+ */
+class QWC_Send_Quote extends WC_Email {
 
-<?php do_action( 'woocommerce_email_header', $email_heading, $email ); ?>
+	/**
+	 * Construct.
+	 */
+	public function __construct() {
 
-<?php
-if ( $order ) :
-	$billing_first_name = ( version_compare( WOOCOMMERCE_VERSION, '3.0.0' ) < 0 ) ? $order->billing_first_name : $order->get_billing_first_name();
-	?>
-	<p>
-		<?php
-		// translators: Billing First Name.
-		echo sprintf( esc_html__( 'Hello %s', 'quote-wc' ), esc_attr( $billing_first_name ) );
-		?>
-	</p>
-<?php endif; ?>
+		$this->id          = 'qwc_send_quote';
+		$this->title       = __( 'Send Quote', 'quote-wc' );
+		$this->description = __( 'This email is sent to Customers for orders that need quotations.', 'quote-wc' );
 
-<p>
-	<?php
-	// translators: Site Name.
-	echo sprintf( esc_html__( 'You have received a quotation for your order on %s. The details of the same are shown below.', 'quote-wc' ), esc_attr( $order_details->blogname ) );
-	?>
-</p>
+		$this->heading = __( 'Quote for #{order_number}', 'quote-wc' );
+		$this->subject = __( '[{blogname}] Quotation for (Order {order_number}) - {order_date}', 'quote-wc' );
 
-<?php if ( $order ) : ?>
+		$this->template_html  = 'emails/send-quote.php';
+		$this->template_plain = 'emails/plain/send-quote.php';
 
-	<?php
-		$order_status = $order->get_status();
-	if ( 'pending' === $order_status ) :
-		?>
-		<p>
-			<?php
-			// translators: Payment Link Url.
-			echo sprintf( esc_html__( 'To pay for this order please use the following link: %s', 'quote-wc' ), '<a href="' . esc_url( $order->get_checkout_payment_url() ) . '">' . esc_html__( 'Pay for order', 'quote-wc' ) . '</a>' );
-			?>
-		</p>
-	<?php endif; ?>
+		// Triggers for this email.
+		add_action( 'qwc_send_quote_notification', array( $this, 'trigger' ) );
 
-	<?php do_action( 'woocommerce_email_before_order_table', $order, $sent_to_admin, $plain_text, $email ); ?>
+		// Call parent constructor.
+		parent::__construct();
 
-	<?php
-	if ( version_compare( WOOCOMMERCE_VERSION, '3.0.0' ) < 0 ) {
-		$order_date = $order->order_date;
-	} else {
-		$order_post = get_post( $order_details->order_id );
-		$post_date  = strtotime( $order_post->post_date );
-		$order_date = date( 'Y-m-d H:i:s', $post_date ); //phpcs:ignore
+		// Other settings.
+		$this->template_base = QUOTES_TEMPLATE_PATH;
+
 	}
-	?>
-	<h2><?php echo esc_html__( 'Order', 'quote-wc' ) . ': ' . esc_html( $order->get_order_number() ); ?> (<?php printf( '<time datetime="%s">%s</time>', date_i18n( 'c', strtotime( $order_date ) ), date_i18n( wc_date_format(), strtotime( $order_date ) ) ); // phpcs:ignore ?>)</h2>
-	<table cellspacing="0" cellpadding="6" style="width: 100%; border: 1px solid #eee;" border="1" bordercolor="#eee">
-		<thead>
-			<tr>
-				<th scope="col" style="text-align:left; border: 1px solid #eee;"><?php esc_html_e( 'Product', 'quote-wc' ); ?></th>
-				<th scope="col" style="text-align:left; border: 1px solid #eee;"><?php esc_html_e( 'Quantity', 'quote-wc' ); ?></th>
-				<th scope="col" style="text-align:left; border: 1px solid #eee;"><?php esc_html_e( 'Price', 'quote-wc' ); ?></th>
-			</tr>
-		</thead>
-		<tbody>
-			<?php
-				$downloadable = $order->is_download_permitted();
 
-			switch ( $order_status ) {
-				case 'completed':
-					$args = array(
-						'show_download_links' => $downloadable,
-						'show_sku'            => false,
-						'show_purchase_note'  => true,
-					);
-					if ( version_compare( WOOCOMMERCE_VERSION, '3.0.0' ) < 0 ) {
-						echo wp_kses_post( $order->email_order_items_table( $args ) );
-					} else {
-						echo wp_kses_post( wc_get_email_order_items( $order, $args ) );
-					}
-					break;
-				case 'processing':
-					$args = array(
-						'show_download_links' => $downloadable,
-						'show_sku'            => true,
-						'show_purchase_note'  => true,
-					);
-					if ( version_compare( WOOCOMMERCE_VERSION, '3.0.0' ) < 0 ) {
-						echo wp_kses_post( $order->email_order_items_table( $args ) );
-					} else {
-						echo wp_kses_post( wc_get_email_order_items( $order, $args ) );
-					}
-					break;
-				default:
-					$args = array(
-						'show_download_links' => $downloadable,
-						'show_sku'            => true,
-						'show_purchase_note'  => false,
-					);
-					if ( version_compare( WOOCOMMERCE_VERSION, '3.0.0' ) < 0 ) {
-						echo wp_kses_post( $order->email_order_items_table( $args ) );
-					} else {
-						echo wp_kses_post( wc_get_email_order_items( $order, $args ) );
-					}
-					break;
-			}
-			?>
-		</tbody>
-		<tfoot>
-			<?php
-			if ( $order->get_order_item_totals() ) {
-				$i = 0;
-				foreach ( $order->get_order_item_totals() as $total ) {
-					$i++;
-					?>
-						<tr>
-							<th scope="row" colspan="2" style="text-align:left; border: 1px solid #eee; 
-							<?php
-							if ( 1 === $i ) {
-								echo 'border-top-width: 4px;';}
-							?>
-							"><?php echo esc_html( $total['label'] ); ?></th>
-							<td style="text-align:left; border: 1px solid #eee; 
-							<?php
-							if ( 1 === $i ) {
-								echo 'border-top-width: 4px;';
-							}
-							?>
-							"><?php echo wp_kses_post( $total['value'] ); ?></td>
-						</tr>
-						<?php
+	/**
+	 * Send the Email.
+	 *
+	 * @param int $order_id - Order ID.
+	 */
+	public function trigger( $order_id ) {
+
+		$send_email = true;
+
+		// Add a filter using which an addon can modify the email send status.
+		// Setting it to true will send the email.
+		// Setting it to false will make sure that the email is not sent for the given item.
+		$send_email = apply_filters( 'qwc_send_quote_email', $send_email, $order_id );
+
+		if ( $order_id > 0 && $send_email ) {
+
+			$this->object = $this->get_order_details( $order_id );
+
+			// Allowed quote statuses
+			$_status = array(
+				'quote-complete',
+				'quote-sent',
+			);
+
+			if ( in_array( $this->object->quote_status, $_status, true ) && $this->is_enabled() ) {
+
+				$this->recipient = $this->object->billing_email;
+				if ( $this->object->order_id ) {
+
+					$this->find[]    = '{order_date}';
+					$this->replace[] = date_i18n( wc_date_format(), strtotime( $this->object->order_date ) );
+
+					$this->find[]    = '{order_number}';
+					$this->replace[] = $this->object->order_id;
+				} else {
+
+					$this->find[]    = '{order_date}';
+					$this->replace[] = date_i18n( wc_date_format(), strtotime( $this->object->item_hidden_date ) );
+
+					$this->find[]    = '{order_number}';
+					$this->replace[] = __( 'N/A', 'quote-wc' );
 				}
+
+				$this->find[]    = '{blogname}';
+				$this->replace[] = $this->object->blogname;
+
+				if ( ! $this->get_recipient() ) {
+					return;
+				}
+
+				$this->send( $this->get_recipient(), $this->get_subject(), $this->get_content(), $this->get_headers(), $this->get_attachments() );
 			}
-			?>
-		</tfoot>
-	</table>
+		}
+	}
 
-	<?php do_action( 'woocommerce_email_after_order_table', $order, $sent_to_admin, $plain_text, $email ); ?>
+	/**
+	 * Prepare Order Details.
+	 *
+	 * @param int $order_id - Order ID.
+	 */
+	public function get_order_details( $order_id ) {
 
-	<?php do_action( 'woocommerce_email_order_meta', $order, $sent_to_admin, $plain_text ); ?>
+		$order_obj = new stdClass();
 
-<?php endif; ?>
+		$order_obj->order_id = $order_id;
 
-<?php do_action( 'woocommerce_email_footer' ); ?>
+		$order = new WC_order( $order_id );
+
+		// Order date.
+		$post_data             = get_post( $order_id );
+		$order_obj->order_date = $post_data->post_date;
+
+		// Email address.
+		$order_obj->billing_email = ( version_compare( WOOCOMMERCE_VERSION, '3.0.0' ) < 0 ) ? $order->billing_email : $order->get_billing_email();
+
+		// Customer ID.
+		$order_obj->customer_id = ( version_compare( WOOCOMMERCE_VERSION, '3.0.0' ) < 0 ) ? $order->user_id : $order->get_user_id();
+
+		// Quote status.
+		$order_obj->quote_status = get_post_meta( $order_id, '_quote_status', true );
+
+		$order_obj->blogname = get_option( 'blogname' );
+		return $order_obj;
+
+	}
+
+	/**
+	 * HTML Email content.
+	 */
+	public function get_content_html() {
+		ob_start();
+		wc_get_template(
+			$this->template_html,
+			array(
+				'order'         => new WC_Order( $this->object->order_id ),
+				'order_details' => $this->object,
+				'email_heading' => $this->get_heading(),
+				'sent_to_admin' => false,
+				'plain_text'    => false,
+				'email'         => $this,
+			),
+			'quotes-for-wc/',
+			$this->template_base
+		);
+		return ob_get_clean();
+	}
+
+	/**
+	 * Plain Email Content.
+	 */
+	public function get_content_plain() {
+		ob_start();
+		wc_get_template(
+			$this->template_plain,
+			array(
+				'order'         => new WC_Order( $this->object->order_id ),
+				'order_details' => $this->object,
+				'email_heading' => $this->get_heading(),
+				'sent_to_admin' => false,
+				'plain_text'    => true,
+				'email'         => $this,
+			),
+			'quotes-for-wc/',
+			$this->template_base
+		);
+		return ob_get_clean();
+	}
+
+	/**
+	 * Default Email Subject.
+	 */
+	public function get_default_subject() {
+		return __( '[{blogname}] Quotation for (Order {order_number}) - {order_date}', 'quote-wc' );
+	}
+
+	/**
+	 * Default Email Heading.
+	 */
+	public function get_default_heading() {
+		return __( 'Quote for #{order_number}', 'quote-wc' );
+	}
+
+	/**
+	 * Email Setting fields.
+	 */
+	public function init_form_fields() {
+		$this->form_fields = array(
+			'enabled'    => array(
+				'title'   => __( 'Enable/Disable', 'quote-wc' ),
+				'type'    => 'checkbox',
+				'label'   => __( 'Enable this email notification', 'quote-wc' ),
+				'default' => 'yes',
+			),
+			'subject'    => array(
+				'title'       => __( 'Subject', 'quote-wc' ),
+				'type'        => 'text',
+				// translators: Email Subject.
+				'description' => sprintf( __( 'This controls the email subject line. Leave blank to use the default subject: <code>%s</code>.', 'quote-wc' ), $this->subject ),
+				'placeholder' => '',
+				'default'     => '',
+			),
+			'heading'    => array(
+				'title'       => __( 'Email Heading', 'quote-wc' ),
+				'type'        => 'text',
+				// translators: Email Heading.
+				'description' => sprintf( __( 'This controls the main heading contained within the email notification. Leave blank to use the default heading: <code>%s</code>.', 'quote-wc' ), $this->heading ),
+				'placeholder' => '',
+				'default'     => '',
+			),
+			'email_type' => array(
+				'title'       => __( 'Email type', 'quote-wc' ),
+				'type'        => 'select',
+				'description' => __( 'Choose which format of email to send.', 'quote-wc' ),
+				'default'     => 'html',
+				'class'       => 'email_type',
+				'options'     => array(
+					'plain'     => __( 'Plain text', 'quote-wc' ),
+					'html'      => __( 'HTML', 'quote-wc' ),
+					'multipart' => __( 'Multipart', 'quote-wc' ),
+				),
+			),
+		);
+	}
+
+}
+return new QWC_Send_Quote();

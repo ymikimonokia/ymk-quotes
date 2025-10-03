@@ -58,7 +58,7 @@ class QWC_Send_Quote extends WC_Email {
 
 			$this->object = $this->get_order_details( $order_id );
 
-			// Allowed quote statuses.
+			// Allowed quote statuses
 			$_status = array(
 				'quote-complete',
 				'quote-sent',

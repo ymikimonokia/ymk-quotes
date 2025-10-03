@@ -1,6 +1,6 @@
 <?php
 /**
- * Request New Quote Embail
+ * Request New Quote Email
  *
  * An email sent to admin when a new quote request arrives
  *
@@ -58,7 +58,7 @@ class QWC_Request_New_Quote extends WC_Email {
 
 			$this->object = $this->get_order_details( $order_id );
 
-			// Allowed quote statuses.
+			// Allowed quote statuses - Este ya funciona correctamente con quote-pending
 			$_status = array(
 				'quote-pending',
 			);
@@ -266,4 +266,3 @@ class QWC_Request_New_Quote extends WC_Email {
 
 }
 return new QWC_Request_New_Quote();
-

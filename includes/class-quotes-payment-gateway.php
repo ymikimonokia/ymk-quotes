@@ -48,29 +48,29 @@ if ( class_exists( 'WC_Payment_Gateway' ) ) {
 		}
 
 		/**
-		 *
-		 * Process the payent gateway.
+		 * Process the payment gateway.
 		 *
 		 * @param int $order_id - Order ID.
 		 * @return array - Payment processed status.
 		 */
 		public function process_payment( $order_id ) {
-			$order = new WC_Order( $order_id );
+		    $order = new WC_Order( $order_id );
 
-			// Add meta.
-			update_post_meta( $order_id, '_qwc_quote', '1' );
+		    // Add meta - AQUÍ SE ESTABLECE TODO
+		    update_post_meta( $order_id, '_qwc_quote', '1' );
+		    update_post_meta( $order_id, '_quote_status', 'quote-pending' ); // ← AÑADIR ESTA LÍNEA
 
-			// Add custom order note.
-			$order->add_order_note( esc_html__( 'This order is awaiting quote.', 'quote-wc' ) );
+		    // Establecer el estado como 'quoted'
+		    $order->update_status( 'quoted', esc_html__( 'This order is awaiting quote.', 'quote-wc' ) );
 
-			// Remove cart.
-			WC()->cart->empty_cart();
+		    // Remove cart.
+		    WC()->cart->empty_cart();
 
-			// Return thankyou redirect.
-			return array(
-				'result'   => 'success',
-				'redirect' => $this->get_return_url( $order ),
-			);
+		    // Return thankyou redirect.
+		    return array(
+		        'result'   => 'success',
+		        'redirect' => $this->get_return_url( $order ),
+		    );
 		}
 
 		/**
