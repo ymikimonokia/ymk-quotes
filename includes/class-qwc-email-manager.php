@@ -22,12 +22,10 @@ class QWC_Email_Manager {
 		// Email Actions.
 		$email_actions = array(
 			'qwc_pending_quote',
-			// Send Quotes.
 			'qwc_send_quote',
-			// new request customer.
 			'qwc_request_sent',
-			// shipping request to customer.
-			'qwc_quote_complete', 
+			'qwc_quote_complete',
+		);
 
 		foreach ( $email_actions as $action ) {
 			add_action( $action, array( 'WC_Emails', 'send_transactional_email' ), 10, 10 );
