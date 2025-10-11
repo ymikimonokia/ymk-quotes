@@ -23,6 +23,7 @@ class QWC_Quote_Complete extends WC_Email {
 		$this->title       = __( 'Quote Complete', 'quote-wc' );
 		$this->description = __( 'This email is sent to Customers when a quote is completed by the admin.', 'quote-wc' );
 
+		$this->customer_email = true;  // Marca como email de cliente
 		$this->heading = __( 'Your Quote is Ready - Order #{order_number}', 'quote-wc' );
 		$this->subject = __( '[{blogname}] Your Quote is Ready (Order {order_number}) - {order_date}', 'quote-wc' );
 
