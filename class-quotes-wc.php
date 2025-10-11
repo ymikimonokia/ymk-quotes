@@ -435,10 +435,11 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 		 * Run validations to ensure products that require quotes
 		 * are not present in the cart with ones that do not.
 		 * This is necessary as the Payment Gateways are different.
+		 * PLUS: Only allow ONE quotable product per cart.
 		 *
 		 * @param bool $passed - Validations passed or no.
 		 * @param int  $product_id - Product ID being validated.
-		 * @param int  $qty - Wuantity being added to the cart.
+		 * @param int  $qty - Quantity being added to the cart.
 		 * @since 1.0
 		 */
 		public function qwc_cart_validations( $passed, $product_id, $qty ) {
@@ -452,20 +453,28 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 			$conflict = 'NO';
 
 			if ( isset( WC()->cart ) && count( WC()->cart->cart_contents ) > 0 ) {
-				// If product requires confirmation and cart contains product that does not.
-				if ( $product_quotable && ! $cart_contains_quotable ) {
+				
+				// Si el producto es cotizable y ya hay algo en el carrito
+				if ( $product_quotable && count( WC()->cart->cart_contents ) > 0 ) {
 					$conflict = 'YES';
+					$message = apply_filters( 
+						'qwc_one_product_limit_msg', 
+						__( 'Solo puedes solicitar cotización para un producto a la vez. El carrito anterior ha sido vaciado.', 'quote-wc' ) 
+					);
 				}
-				// If product does not need confirmation and cart contains a product that does.
-				if ( ! $product_quotable && $cart_contains_quotable ) {
+				// Si el producto NO es cotizable pero el carrito contiene productos cotizables
+				elseif ( ! $product_quotable && $cart_contains_quotable ) {
 					$conflict = 'YES';
+					$message = apply_filters( 
+						'qwc_cart_conflict_msg', 
+						__( 'It is not possible to add products that require quotes to the Cart along with ones that do not. Hence, the existing products have been removed from the Cart.', 'quote-wc' ) 
+					);
 				}
-				// If conflict.
+				
+				// If conflict, empty cart
 				if ( 'YES' === $conflict ) {
-					// Remove existing products.
 					WC()->cart->empty_cart();
-					$message = apply_filters( 'qwc_cart_conflict_msg', __( 'It is not possible to add products that require quotes to the Cart along with ones that do not. Hence, the existing products have been removed from the Cart.', 'quote-wc' ) );
-					wc_add_notice( $message, $notice_type = 'notice' );
+					wc_add_notice( $message, 'notice' );
 				}
 			}
 
