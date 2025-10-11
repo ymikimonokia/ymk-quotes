@@ -694,6 +694,46 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 			die();
 		}
 
+
+
+		/**
+		 * Send quote complete email to user.
+		 *
+		 * @since 2.0
+		 */
+		public function qwc_send_quote_complete_email() {
+
+			$order_id = ( isset( $_POST['order_id'] ) ) ? sanitize_text_field( wp_unslash( $_POST['order_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+
+			if ( $order_id > 0 ) {
+
+				$quote_status = get_post_meta( $order_id, '_quote_status', true );
+				
+				// Allowed quote statuses.
+				$_status = array(
+					'quote-complete',
+				);
+
+				// Create an instance of the WC_Emails class, so emails are sent out to customers.
+				WC_Emails::instance();
+				
+				if ( in_array( $quote_status, $_status, true ) ) {
+					do_action( 'qwc_quote_complete_notification', $order_id ); // USAR LA NUEVA ACCIÓN
+				}
+
+				// Add an order note.
+				$order         = wc_get_order( $order_id );
+				$billing_email = $order->get_billing_email();
+				$note          = __( 'Quote complete email sent to ', 'quote-wc' ) . $billing_email;
+				$order->add_order_note( $note );
+				
+				echo 'email-sent';
+			}
+			die();
+		}
+
+
+
 		/**
 		 * Adds the Quotes menu to WordPress Dashboard
 		 *

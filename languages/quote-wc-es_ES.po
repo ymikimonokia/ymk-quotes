@@ -11,7 +11,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2020-06-20T16:37:48+00:00\n"
-"PO-Revision-Date: 2025-09-20 16:44+0200\n"
+"PO-Revision-Date: 2025-10-11 11:13+0200\n"
 "X-Generator: Poedit 1.8.11\n"
 "X-Domain: quote-wc\n"
 "Language: es_ES\n"
@@ -27,8 +27,8 @@ msgstr "<strong>Subtotal:</strong> <span class='amount'>%s</span>"
 #: includes/emails/class-qwc-send-quote.php:175
 msgid "[{blogname}] Quotation for (Order {order_number}) - {order_date}"
 msgstr ""
-"[{blogname}] Cotización correspondiente a la orden nº{order_number} - "
-"{order_date}"
+"[{blogname}] Firma tu solicitud de venta nº{order_number} - {order_date} y "
+"recibe tu pago."
 
 #: includes/emails/class-qwc-request-new-quote.php:27
 #: includes/emails/class-qwc-request-new-quote.php:207
@@ -469,8 +469,7 @@ msgid ""
 "You have received a quotation for your order on %s. The details of the same "
 "are shown below."
 msgstr ""
-"Has recibido una cotización para tu solicitud en %s. Los detalles están a "
-"continuación."
+"Aprovada tu solicitud de venta en %s. Los detalles están a continuación."
 
 #: templates/emails/new-quote-request-sent-customer.php:73
 #: templates/emails/plain/new-quote-request-sent-customer.php:59

@@ -26,7 +26,8 @@ class QWC_Email_Manager {
 			'qwc_send_quote',
 			// new request customer.
 			'qwc_request_sent',
-		);
+			// shipping request to customer.
+			'qwc_quote_complete', 
 
 		foreach ( $email_actions as $action ) {
 			add_action( $action, array( 'WC_Emails', 'send_transactional_email' ), 10, 10 );
@@ -75,6 +76,10 @@ class QWC_Email_Manager {
 		if ( ! isset( $emails['QWC_Request_Sent'] ) ) {
 			$emails['QWC_Request_Sent'] = include_once plugin_dir_path( __FILE__ ) . 'emails/class-qwc-request-sent.php';
 		}
+		if ( ! isset( $emails['QWC_Quote_Complete'] ) ) {
+			$emails['QWC_Quote_Complete'] = include_once plugin_dir_path( __FILE__ ) . 'emails/class-qwc-quote-complete.php';
+		}
+
 		return $emails;
 	}
 

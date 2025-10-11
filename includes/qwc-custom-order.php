@@ -195,7 +195,7 @@ function ymk_add_content_tradein_emaila( $order, $sent_to_admin, $plain_text, $e
     $edit_quoted_number = get_post_meta( $order_id, '_quoted_number', true );
 
    if ( $order->get_status() == "quoted" ) {
-      echo '<h2 class="email-upsell-title">Sigue tu venta.</h2><p class="email-upsell-p">Puedes hacer el seguimiento <a target="_blank" href="/mi-cuenta/mis-ventas">aquí</a> con el número de seguimiento: ' . $edit_quoted_number . '.</p>';
+      echo '<h2 class="email-upsell-title">Firma tu venta.</h2><p class="email-upsell-p">Puedes confirmar tu venta <a target="_blank" href="'.get_site_url().'/mi-cuenta/quotes">pulsando aquí</a>.' . $edit_quoted_number . '.</p>';
    }
 }
 
