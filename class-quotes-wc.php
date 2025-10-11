@@ -358,9 +358,10 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 					'qwc-admin',
 					'qwc_params',
 					array(
-						'ajax_url'  => $ajax_url,
-						'order_id'  => $post->ID,
-						'email_msg' => __( 'Quote emailed.', 'quote-wc' ),
+						'ajax_url'            => $ajax_url,
+						'order_id'            => $post->ID,
+						'email_msg'           => __( 'Quote emailed.', 'quote-wc' ),
+						'quote_complete_msg'  => __( 'Quote complete email sent.', 'quote-wc' ),
 					)
 				);
 				wp_enqueue_script( 'qwc-admin' );
@@ -375,6 +376,7 @@ if ( ! class_exists( 'Quotes_WC' ) ) {
 		public function qwc_ajax_admin() {
 			add_action( 'wp_ajax_qwc_update_status', array( &$this, 'qwc_update_status' ) );
 			add_action( 'wp_ajax_qwc_send_quote', array( &$this, 'qwc_send_quote' ) );
+			add_action( 'wp_ajax_qwc_send_quote_complete_email', array( &$this, 'qwc_send_quote_complete_email' ) );
 		}
 
 		/**
